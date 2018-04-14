@@ -1,0 +1,8 @@
+[app]
+# Put app server IP address here (APP and DB can be on the same server)
+
+[db]
+# Put DB server IP address here
+
+[revproxy]
+10.10.10.1

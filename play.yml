@@ -1,0 +1,45 @@
+---
+
+- name: PreTasks
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Add App host
+      add_host:
+        name: "{{ lookup('env','IP_APPSERVER') }}"
+        group: app
+    - name: Add DB host
+      add_host:
+        name: "{{ lookup('env','IP_DBSERVER') }}"
+        group: db
+    - debug:
+        msg: "{{ hostvars.localhost.groups.app }}"
+   
+- name: Installing Borgia
+  become: yes
+  hosts: "{{ hostvars.localhost.groups.app }}"
+  remote_user: automation  
+  roles:
+    - install_deps
+
+- name: Installing Borgia
+  hosts: "{{ hostvars.localhost.groups.db }}"
+  become: yes
+  remote_user: automation
+  roles:
+    - postgres
+  
+- name: Installing Borgia
+  become: yes
+  hosts: "{{ hostvars.localhost.groups.app }}"
+  remote_user: automation  
+  roles:
+    - borgia
+
+- name: Reverse proxy tasks
+  become: yes
+  hosts: revproxy
+  remote_user: automation
+  roles:
+    - nginx
+...

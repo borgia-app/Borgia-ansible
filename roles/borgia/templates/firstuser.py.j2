@@ -1,0 +1,5 @@
+import django.contrib.auth.models;
+from users.models import User;
+u = User.objects.get(pk=2);
+u.set_password('{{ admin_pass }}');
+u.save();

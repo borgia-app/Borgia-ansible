@@ -1,0 +1,22 @@
+# borgia_uwsgi.ini file
+[uwsgi]
+
+# Django-related settings
+# the base directory (full path)
+chdir           = {{ hostvars[current_host].borgia_path }}
+# Django's wsgi file
+module          = borgia.wsgi
+# the virtualenv (full path)
+home            = {{ hostvars[current_host].borgiaenv_path }}
+
+# process-related settings
+# master
+master          = true
+# maximum number of worker processes
+processes       = 10
+# the socket (use the full path to be safe
+socket          = {{ hostvars[current_host].borgia_path }}/borgia.sock
+# ... with appropriate permissions - may be needed
+chmod-socket    = 666
+# clear environment on exit
+vacuum          = true

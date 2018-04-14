@@ -1,0 +1,196 @@
+---
+
+- name: Create base Borgia-app directory
+  file:
+    path: "/borgia-app"
+    state: directory
+
+- name: Symlink virtualenv bin
+  file:
+    src: /usr/local/bin/virtualenv
+    dest: /usr/bin/virtualenv
+    remote_src: yes
+    state: link
+
+- name: Create a virtualenv
+  shell: "virtualenv borgiaenv"
+  args:
+    chdir: /borgia-app
+
+- name: Store Borgia path
+  set_fact:
+    borgia_path: /borgia-app/Borgia
+    borgiaenv_path: /borgia-app/borgiaenv
+
+- name: Store virtualenv activate path
+  set_fact:
+    virtualenv_activate: "{{ hostvars[current_host].borgiaenv_path }}/bin/activate"
+
+
+- name: Remove Borgia
+  file:
+    path: "{{ hostvars[current_host].borgia_path }}"
+    state: absent
+
+- name: Clone Borgia repo
+  git:
+    repo: "https://github.com/borgia-app/Borgia.git"
+    dest: "{{ hostvars[current_host].borgia_path }}"
+    clone: yes
+
+- name: Git checkouts on latest tag
+  shell: "git checkout {{ item }}"
+  args:
+    chdir: "{{ hostvars[current_host].borgia_path }}"
+  with_items:
+    - tags/4.5.1
+    - -b production_4.5.1
+
+- name: Install Pip packages from requirements
+  pip:
+    requirements: "{{ hostvars[current_host].borgia_path }}/requirements.txt"
+    virtualenv: /borgia-app/borgiaenv
+
+- name: Install less with yarn
+  shell: "yarn global add less"
+
+- name: Symlink lessc command
+  file:
+    src: '/usr/local/bin/lessc'
+    dest: '/usr/bin/lessc'
+    state: link
+
+- name: Configuring Borgia settings from template
+  template:
+    src: 'templates/settings.py.j2'
+    dest: '{{ hostvars[current_host].borgia_path }}/borgia/settings.py'
+
+- name: Nginx configuration
+  block:
+    - name: Install NginX
+      apt: name=nginx state=latest
+
+    - name: Configuring existing Borgia nginx
+      template:
+        src: 'templates/borgia_nginx.conf.j2'
+        dest: '{{ hostvars[current_host].borgia_path }}/borgia_nginx.conf'
+
+    - name: Symlink borgia nginx conf to enabled sites
+      file:
+        src: '{{ hostvars[current_host].borgia_path }}/borgia_nginx.conf'
+        dest: '/etc/nginx/sites-enabled/borgia_nginx.conf'
+        remote_src: yes
+        state: link
+      notify: restart nginx
+
+- name: Database migration
+  block:
+    - name: Chmod manage.py
+      file:
+        path: "{{ hostvars[current_host].borgia_path }}/manage.py"
+        mode: 0755
+
+    - name: Install psycopg2 module within virtualenv"
+      shell: "source {{ hostvars[current_host].virtualenv_activate }} && pip3 install psycopg2"
+      args:
+        chdir: "{{ hostvars[current_host].borgia_path }}"
+        executable: /bin/bash
+
+    - name: Make migrations
+      shell: "source {{ hostvars[current_host].virtualenv_activate }} && python3 manage.py makemigrations users shops finances modules settings_data notifications stocks"
+      args:
+        chdir: "{{ hostvars[current_host].borgia_path }}"
+        executable: /bin/bash
+
+    - name: Migrate
+      django_manage:
+        command: migrate
+        app_path: "{{ hostvars[current_host].borgia_path }}"
+        virtualenv: "/borgia-app/borgiaenv"
+
+    - name: Load data
+      django_manage:
+        command: loaddata
+        app_path: "{{ hostvars[current_host].borgia_path }}"
+        fixtures: "{{ item }}"
+        virtualenv: "/borgia-app/borgiaenv"
+      with_items:
+        - initial
+        - first_member
+
+    - name: Collect static
+      django_manage:
+        command: collectstatic
+        app_path: "{{ hostvars[current_host].borgia_path }}"
+        virtualenv: "/borgia-app/borgiaenv"
+
+    - name: Copy script that modifies first user password
+      template:
+        src: 'templates/firstuser.py.j2'
+        dest: '{{ hostvars[current_host].borgia_path }}/firstuser.py'
+
+    - name: Run script inside Django shell
+      shell: "source {{ hostvars[current_host].virtualenv_activate }} && python3 manage.py shell < firstuser.py"
+      args:
+        chdir: '{{ hostvars[current_host].borgia_path }}'
+        executable: /bin/bash
+
+    - name: Remove first user script
+      file:
+        path: '{{ hostvars[current_host].borgia_path }}/firstuser.py'
+        state: absent
+
+
+- name: Install uwsgi
+  block:
+    - name: Install uwsgi module within virtualenv"
+      shell: "source {{ hostvars[current_host].virtualenv_activate }} && pip3 install uwsgi"
+      args:
+        executable: /bin/bash
+   
+    - name: Install uwsgi out of virtualenv
+      shell: "pip3 install uwsgi"
+      args:
+        executable: /bin/bash
+
+    - name: Edit borgia.uwsgi
+      lineinfile:
+        path: "{{ hostvars[current_host].borgia_path }}/borgia.wsgi"
+        regexp: "^chdir = " 
+        line: 'chdir = {{ hostvars[current_host].borgia_path }}/'
+
+    - name: Edit borgia_uwsgi.ini
+      template:
+        src: 'templates/borgia_uwsgi.ini.j2'
+        dest: '{{ hostvars[current_host].borgia_path }}/borgia_uwsgi.ini'
+
+    - name: Make uwsgi emperor directory
+      file:
+        path: '/etc/uwsgi/vassals'
+        state: directory
+
+    - name: Symlink borgia_uwsgi.ini file
+      file:
+        src: '{{ hostvars[current_host].borgia_path }}/borgia_uwsgi.ini'
+        dest: '/etc/uwsgi/vassals/borgia_uwsgi.ini'
+        remote_src: yes
+        state: link
+
+    - name: Creating borgia boot service
+      template:
+        src: 'templates/borgia.service.j2'
+        dest: '/etc/systemd/system/borgia.service'
+        mode: 0664
+
+    - name: Creating borgia boot script
+      template:
+        src: 'templates/borgia_uwsgi.sh.j2'
+        dest: '/usr/local/bin/borgia_uwsgi.sh'
+        mode: 0744
+
+    - name: Systemctl commands (reload, enable and start Borgia service)
+      shell: "systemctl {{ item }}"
+      with_items:
+        - daemon-reload
+        - enable borgia.service
+        - start borgia.service

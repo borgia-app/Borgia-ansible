@@ -1,0 +1,31 @@
+---
+- name: Install Postgres
+  apt: name='{{ item }}' update_cache=yes state=latest
+  with_items:
+    - postgresql
+    - postgresql-contrib
+    - python-psycopg2
+
+- name: Destroy Borgia database
+  become : yes
+  become_user: postgres
+  postgresql_db:
+    name: '{{ db_name }}'
+    state: absent
+
+- name: Create Borgia database
+  become : yes
+  become_user: postgres
+  postgresql_db:
+    name: '{{ db_name }}'
+    encoding: UTF-8
+    template: template0
+
+- name: Create Borgia user
+  become_user: postgres
+  postgresql_user:
+    name: '{{ db_user }}'
+    password: '{{ db_password }}'
+    db: '{{ db_name }}'
+    priv: "ALL"
+

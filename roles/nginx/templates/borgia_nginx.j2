@@ -1,0 +1,15 @@
+upstream {{ server_name_short }} {
+    server {{ app_master_host }};
+}
+
+server {
+    server_name {% for hostname in server_names %} {{ hostname }}{% endfor %};
+
+    location / {
+        proxy_pass http://{{ server_name_short }};
+        proxy_set_header    Host $host;
+
+        proxy_connect_timeout 30;
+        proxy_send_timeout 30;
+    }
+}

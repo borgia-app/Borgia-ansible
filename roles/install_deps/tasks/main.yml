@@ -1,0 +1,45 @@
+---
+- name: Upgrade packages
+  apt: update_cache=yes upgrade=full force_apt_get=yes
+
+- name: Install necessary packages
+  apt: name='{{ item }}' state=latest
+  with_items:
+    - curl
+    - apt-transport-https
+    - git
+
+- name: Install Python packages and dependencies
+  apt: name='{{ item }}' state=latest
+  with_items:
+    - build-essential
+    - libpq-dev
+    - python-dev
+    - libjpeg-dev
+    - libssl-dev
+    - libffi-dev
+    - python3-pip
+
+- name: Installing Virtualenv
+  shell: "pip3 install virtualenv virtualenvwrapper"
+
+- name: Add Yarn Apt signing key
+  apt_key:
+    url: 'https://dl.yarnpkg.com/debian/pubkey.gpg'
+    state: present
+
+- name: Add Yarn source in apt source lists
+  apt_repository:
+    repo: 'deb https://dl.yarnpkg.com/debian/ stable main'
+    state: present
+    filename: 'yarn.list'
+
+- name: Install Yarn
+  apt: name=yarn update_cache=yes state=latest
+
+- name: Symlink nodejs command
+  file:
+    src: '/usr/bin/nodejs'
+    dest: '/usr/bin/node'
+    remote_src: yes
+    state: link

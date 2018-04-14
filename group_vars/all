@@ -1,0 +1,34 @@
+---
+
+##########################################
+############## Host Vars #################
+##########################################
+
+current_host: '{{ ansible_default_ipv4.address }}'
+app_master_host: '{{ hostvars.localhost.groups.app | first }}'
+db_master_host: '{{ hostvars.localhost.groups.db | first }}'
+
+##########################################
+############## Postgres Vars #############
+##########################################
+
+db_name: borgia
+db_user: borgiauser
+db_password: 665dsf5!9m8&-5
+
+##########################################
+############## NginX Vars ################
+##########################################
+
+server_name_short: "{{ lookup('env','SERVER_NAME_SHORT') }}"
+server_names: ["{{ server_name_short }}.ueam.net", "{{ lookup('env','CAMPUS') }}.borgia-app.com"]
+
+
+##########################################
+############## Borgia Vars ###############
+##########################################
+
+center_name: "{{ lookup('env','CENTER_NAME') }}"
+lydia_vendor_token: "{{ lookup('env','LYDIA_VENDOR_TOKEN') }}"
+lydia_api_token: "{{ lookup('env','LYDIA_API_TOKEN') }}"
+admin_pass: "{{ lookup('env','ADMIN_PASS') }}"    

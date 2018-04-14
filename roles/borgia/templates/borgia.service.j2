@@ -1,0 +1,10 @@
+[Unit]
+Description=Launch Borgia uwsgi emperor
+After=nginx.service
+
+[Service]
+ExecStart=/usr/local/bin/borgia_uwsgi.sh
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

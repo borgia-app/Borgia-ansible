@@ -1,0 +1,7 @@
+---
+
+- name: Copy nginx conf to reverse proxy
+  template:
+    src: 'templates/borgia_nginx.j2'
+    dest: '/etc/nginx/sites-enabled/{{ server_name_short }}'
+  notify: restart nginx
