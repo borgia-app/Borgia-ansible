@@ -6,11 +6,11 @@
   tasks:
     - name: Add App host
       add_host:
-        name: "{{ lookup('env','IP_APPSERVER') }}"
+        name: "{{ ip_appserver }}"
         group: app
     - name: Add DB host
       add_host:
-        name: "{{ lookup('env','IP_DBSERVER') }}"
+        name: "{{ ip_dbserver }}"
         group: db
     - debug:
         msg: "{{ hostvars.localhost.groups.app }}"
