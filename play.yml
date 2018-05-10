@@ -3,7 +3,7 @@
 - name: PreTasks
   hosts: localhost
   connection: local
-  tasks:
+  pre_tasks:
     - name: Add App host
       add_host:
         name: "{{ ip_appserver }}"
@@ -12,17 +12,15 @@
       add_host:
         name: "{{ ip_dbserver }}"
         group: db
-    - debug:
-        msg: "{{ hostvars.localhost.groups.app }}"
    
-- name: Installing Borgia
+- name: Installing Borgia dependencies
   become: yes
   hosts: "{{ hostvars.localhost.groups.app }}"
   remote_user: automation  
   roles:
     - install_deps
 
-- name: Installing Borgia
+- name: Installing Borgia database
   hosts: "{{ hostvars.localhost.groups.db }}"
   become: yes
   remote_user: automation

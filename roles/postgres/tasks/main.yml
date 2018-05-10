@@ -26,9 +26,6 @@
   shell: "< /dev/urandom tr -dc _A-Za-z0-9 | head -c12"
   register: db_password
 
-- debug:
-    msg: "{{ db_password.stdout }}"
-
 - name: Create Borgia user
   become_user: postgres
   postgresql_user:
