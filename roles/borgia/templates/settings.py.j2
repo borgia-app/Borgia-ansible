@@ -21,7 +21,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '{{ lookup('password', '/tmp/passwordfile chars=ascii_letters length=40') }}'
+SECRET_KEY = '{{ hostvars[current_host].borgia_secret_key.stdout }}'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -93,7 +93,7 @@ DATABASES = {
        'ENGINE': 'django.db.backends.postgresql_psycopg2',
        'NAME': '{{ db_name }}',
        'USER': '{{ db_user }}',
-       'PASSWORD': '{{ db_password }}',
+       'PASSWORD': '{{ db_password.stdout }}',
        'HOST': 'localhost',
        'PORT': '5432',
    }
@@ -185,11 +185,11 @@ MEDIA_URL = '/media/'
 
 # Lydia
 LYDIA_CALLBACK_URL = 'https://{{ server_names | last }}/self/lydias/callback/'  # https ou non selon$
-LYDIA_CONFIRM_URL = 'http://{{ server_names | last }}/gadzarts/self/lydias/confirm/'
+LYDIA_CONFIRM_URL = 'https://{{ server_names | last }}/gadzarts/self/lydias/confirm/'
 
 # Penser    activer 'autoriser l'acces par les applications moins s  curis  es' dans Gmail
 EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = 'ae.boquette@gmail.com'
+DEFAULT_FROM_EMAIL = 'ae.ensam.assoc@gmail.com'
 SERVER_EMAIL = 'ae.ensam.assoc@gmail.com'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -200,7 +200,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # Electrovanne
 ARDUINO_PRIVATE = 'need to be changed'
 
-ADMINS = [ ("Wassim", "wassimbel94@gmail.com")]
+ADMINS = [ ("Wassim", "wassimbel94@gmail.com"), ("Alexandre", "alexandre.palo@gadz.org") ]
 
 # Dur  e de validit   du token reset password
 PASSWORD_RESET_TIMEOUT_DAYS = 1  # en jours

@@ -5,3 +5,15 @@
     src: 'templates/borgia_nginx.j2'
     dest: '/etc/nginx/sites-enabled/{{ server_name_short }}'
   notify: restart nginx
+
+- name: Apply Let's Encrypt certificate
+  become: yes
+  block:
+    - name: Generate list of servers
+      set_fact:
+        servers_list: "{{ servers_list }}-d {{ item }} "
+      with_items:
+        - "{{ server_names }}"
+    - name: Apply Let's Encrypt certificate
+      shell: "certbot --authenticator standalone --installer nginx --pre-hook 'service nginx stop' --post-hook 'service nginx start' {{ servers_list }} --redirect"
+  when: ( https_enabled == 'true' )

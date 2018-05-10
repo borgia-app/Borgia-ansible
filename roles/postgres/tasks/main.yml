@@ -21,11 +21,19 @@
     encoding: UTF-8
     template: template0
 
+- name: Generating random password for Borgia DB user
+  become: yes
+  shell: "< /dev/urandom tr -dc _A-Za-z0-9 | head -c12"
+  register: db_password
+
+- debug:
+    msg: "{{ db_password.stdout }}"
+
 - name: Create Borgia user
   become_user: postgres
   postgresql_user:
     name: '{{ db_user }}'
-    password: '{{ db_password }}'
+    password: '{{ db_password.stdout }}'
     db: '{{ db_name }}'
     priv: "ALL"
 

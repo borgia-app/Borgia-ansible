@@ -17,7 +17,6 @@ db_master_host: '{{ hostvars.localhost.groups.db | first }}'
 
 db_name: borgia
 db_user: borgiauser
-db_password: 665dsf5!9m8&-5
 
 ##########################################
 ############## NginX Vars ################
@@ -25,12 +24,16 @@ db_password: 665dsf5!9m8&-5
 
 server_name_short: "{{ lookup('env','SERVER_NAME_SHORT') }}"
 server_names: ["{{ server_name_short | lower}}.ueam.net", "{{ campus | lower }}.borgia-app.com"]
+https_enabled: "{{ lookup('env','HTTPS_ENABLED') | default(false) }}"
 
+# Don't change the line below
+servers_list: ""
 
 ##########################################
 ############## Borgia Vars ###############
 ##########################################
 
+code_tag: "{{ lookup('env','CODE_TAG') }}"
 campus: "{{ lookup('env','CAMPUS') }}"
 center_name: "{{ lookup('env','CENTER_NAME') }}"
 lydia_vendor_token: "{{ lookup('env','LYDIA_VENDOR_TOKEN') }}"
