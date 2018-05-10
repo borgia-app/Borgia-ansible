@@ -145,7 +145,7 @@
         state: absent
 
 
-- name: Install uwsgi
+- name: Install uwsgi and Borgia service
   block:
     - name: Install uwsgi module within virtualenv"
       shell: "source {{ hostvars[current_host].virtualenv_activate }} && pip3 install uwsgi"
@@ -198,3 +198,17 @@
         - daemon-reload
         - enable borgia.service
         - start borgia.service
+
+- name: Commit local changes
+  block:
+    - name: Add local changes
+      shell: "git add ."
+      args:
+       chdir: '{{ hostvars[current_host].borgia_path }}'
+       executable: /bin/bash
+
+    - name: Commit local changes
+      shell: "git commit -m 'Local changes'"
+      args:
+       chdir: '{{ hostvars[current_host].borgia_path }}'
+       executable: /bin/bash
