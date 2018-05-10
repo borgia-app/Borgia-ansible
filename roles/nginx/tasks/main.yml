@@ -15,5 +15,5 @@
       with_items:
         - "{{ server_names }}"
     - name: Apply Let's Encrypt certificate
-      shell: "certbot --authenticator standalone --installer nginx --pre-hook 'service nginx stop' --post-hook 'service nginx start' {{ servers_list }} --redirect"
+      shell: "certbot --authenticator standalone --installer nginx --pre-hook 'service nginx stop' --post-hook 'service nginx start' {{ servers_list }} --redirect --expand --keep-until-expiring --non-interactive"
   when: ( https_enabled == 'true' )
